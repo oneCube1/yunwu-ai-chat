@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>云雾AI聊天助手</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .chat-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #user-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 20px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        #response-container {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            min-height: 100px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+        }
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        .loading:after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+    </style>
+</head>
+<body>
+    <h1>云雾AI聊天助手</h1>
+    <div class="chat-container">
+        <div class="input-container">
+            <textarea id="user-input" placeholder="请输入您的问题..." rows="3"></textarea>
+            <button id="send-button">发送</button>
+        </div>
+        <div class="loading" id="loading">正在思考中</div>
+        <div id="response-container"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const responseContainer = document.getElementById('response-container');
+            const loadingIndicator = document.getElementById('loading');
+            
+            // API地址，这里指向Cloudflare Worker
+            const apiUrl = 'https://你的worker名称.你的用户名.workers.dev/api/chat';
+            
+            sendButton.addEventListener('click', async function() {
+                const question = userInput.value.trim();
+                if (!question) return;
+                
+                // 显示加载状态
+                loadingIndicator.style.display = 'block';
+                responseContainer.textContent = '';
+                
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ question: question })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误! 状态码: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    responseContainer.textContent = data.answer;
+                } catch (error) {
+                    console.error('发生错误:', error);
+                    responseContainer.textContent = '请求失败，请稍后再试。错误: ' + error.message;
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                }
+            });
+            
+            // 支持按回车键发送消息
+            userInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    sendButton.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
